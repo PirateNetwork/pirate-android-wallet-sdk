@@ -19,7 +19,7 @@ plugins {
 
 // Publishing information
 val ARTIFACT_ID = project.property("POM_ARTIFACT_ID").toString()
-project.group = "cash.z.ecc.android"
+project.group = "io.github.piratenetwork"
 project.version = project.property("LIBRARY_VERSION").toString()
 publishing {
     publications {
@@ -109,7 +109,7 @@ tasks.dokkaHtml.configure {
     dokkaSourceSets {
         configureEach {
             outputDirectory.set(file("build/docs/rtd"))
-            displayName.set("Zcash Android SDK")
+            displayName.set("Multicoin Android SDK")
             includes.from("packages.md")
         }
     }

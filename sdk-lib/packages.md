@@ -1,6 +1,6 @@
-# Module zcash-android-sdk
+# Module multicoin-android-sdk
 
-SDK connecting Android to Zcash. It welds together Rust and Kotlin in a minimal way, allowing third-party Android apps to send and receive shielded transactions easily, securely and privately.
+SDK connecting Android to Zcash type coins. It welds together Rust and Kotlin in a minimal way, allowing third-party Android apps to send and receive shielded transactions easily, securely and privately.
 
 # Package cash.z.ecc.android.sdk.block
 
