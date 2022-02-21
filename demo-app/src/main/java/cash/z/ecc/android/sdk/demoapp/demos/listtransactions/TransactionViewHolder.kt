@@ -35,6 +35,6 @@ class TransactionViewHolder<T : ConfirmedTransaction>(itemView: View) : Recycler
     }
 
     private fun getMemoString(transaction: T?): String {
-        return transaction?.memo?.takeUnless { it[0] < 0 }?.let { String(it) } ?: "no memo"
+        return transaction?.memo?.takeUnless { it.size > 0 }?.let { String(it) } ?: "no memo"
     }
 }

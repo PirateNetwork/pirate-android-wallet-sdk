@@ -45,7 +45,7 @@ use zcash_client_sqlite::{
     },
     BlockDb, NoteId, WalletDb,
 };
-use zcash_primitives::consensus::Network::{MainNetwork, TestNetwork};
+use zcash_primitives::consensus::Network::{TestNetwork, MainNetwork, PirateNetwork};
 use zcash_primitives::{
     block::BlockHash,
     consensus::{BlockHeight, BranchId, Network, Parameters},
@@ -1177,6 +1177,7 @@ fn parse_network(value: u32) -> Result<Network, failure::Error> {
     match value {
         0 => Ok(TestNetwork),
         1 => Ok(MainNetwork),
-        _ => Err(format_err!("Invalid network type: {}. Expected either 0 or 1 for Testnet or Mainnet, respectively.", value))
+        2 => Ok(PirateNetwork),
+        _ => Err(format_err!("Invalid network type: {}. Expected either 0, 1, for Testnet, Mainnet or Piratenet, respectively.", value))
     }
 }
