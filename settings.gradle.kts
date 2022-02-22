@@ -178,7 +178,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "zcash-android-sdk"
+rootProject.name = "multicoin-android-sdk"
 
 includeBuild("build-conventions")
 

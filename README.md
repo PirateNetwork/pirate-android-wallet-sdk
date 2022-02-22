@@ -1,5 +1,6 @@
 [![license](https://img.shields.io/github/license/zcash/zcash-android-wallet-sdk.svg?maxAge=2592000&style=plastic)](https://github.com/zcash/zcash-android-wallet-sdk/blob/master/LICENSE)
-![Maven Central](https://img.shields.io/maven-central/v/cash.z.ecc.android/zcash-android-sdk?color=success&style=plastic)
+
+![Maven Central](https://img.shields.io/maven-central/v/cash.z.ecc.android/multicoin-android-sdk?color=success&style=plastic)
 
 This is a beta build and is currently under active development. Please be advised of the following:
 
@@ -9,15 +10,20 @@ This is a beta build and is currently under active development. Please be advise
 
 🔒 Security Warnings
 
-- The Zcash Android Wallet SDK is experimental and a work in progress. Use it at your own risk.
+- The Multicoin Android Wallet SDK is experimental and a work in progress. Use it at your own risk.
 - Developers using this SDK must familiarize themselves with the current [threat
   model](https://zcash.readthedocs.io/en/latest/rtd_pages/wallet_threat_model.html), especially the known weaknesses described there.
 
 ---
 
-# Zcash Android SDK
+# Multicoin Android SDK
 
-This lightweight SDK connects Android to Zcash. It welds together Rust and Kotlin in a minimal way, allowing third-party Android apps to send and receive shielded transactions easily, securely and privately.
+This lightweight SDK connects Android to Zcash type coins. It welds together Rust and Kotlin in a minimal way, allowing third-party Android apps to send and receive shielded transactions easily, securely and privately.
+
+Coins Implemented:
+ - Zcash - Testnet
+ - ZCash - Mainnet
+ - Pirate Chain - Mainnet
 
 ## Contents
 
@@ -37,7 +43,7 @@ This SDK is designed to work with [lightwalletd](https://github.com/zcash-hackwo
 
 ## Structure
 
-From an app developer's perspective, this SDK will encapsulate the most complex aspects of using Zcash, freeing the developer to focus on UI and UX, rather than scanning blockchains and building commitment trees! Internally, the SDK is structured as follows:
+From an app developer's perspective, this SDK will encapsulate the most complex aspects of using Zcash type coins, freeing the developer to focus on UI and UX, rather than scanning blockchains and building commitment trees! Internally, the SDK is structured as follows:
 
 ![SDK Diagram](assets/sdk_diagram_final.png?raw=true "SDK Diagram")
 
@@ -83,9 +89,7 @@ To accomplish this, these responsibilities of the SDK are divided into separate 
 
 ## Quickstart
 
-Add flavors for testnet v mainnet. Since `productFlavors` cannot start with the word 'test' we recommend:
-
-build.gradle:
+Add flavors for testnet, mainnet and piratenet. Since `productFlavors` cannot start with the word 'test' we recommend:
 ```groovy
 flavorDimensions 'network'
 productFlavors {
@@ -97,6 +101,10 @@ productFlavors {
     zcashmainnet {
         dimension 'network'
         matchingFallbacks = ['zcashmainnet', 'release']
+    }
+    piratenet {
+        dimension 'network'
+        matchingFallbacks = ['piratenet', 'release']
     }
 }
 ```
@@ -121,8 +129,8 @@ productFlavors {
 
 Add the SDK dependency:
 
-```kotlin
-implementation("cash.z.ecc.android:zcash-android-sdk:1.4.0-beta01")
+```groovy
+implementation 'cash.z.ecc.android:multicoin-android-sdk:1.5.0-beta01'
 ```
 
 Start the [Synchronizer](docs/-synchronizer/README.md)
@@ -183,8 +191,8 @@ In the event that you *do* want to compile the SDK from sources, follow these st
 ```bash
 rustup target add armv7-linux-androideabi aarch64-linux-android i686-linux-android x86_64-linux-android
 ```
-3. Clone this repo 
-4. [Install Android Studio](https://developer.android.com/studio/install) and open this project via `/your/path/to/zcash-android-wallet-sdk/build.gradle.kts`
+3. Clone this repo
+4. [Install Android Studio](https://developer.android.com/studio/install) and open this project via `/your/path/to/multicoin-android-wallet-sdk/build.gradle.kts`
 5. Open Android Studio’s SDK manager
 <p align="center">
     <img src="assets/sdk-manager-icon.png?raw=true" width="70%"/>
@@ -199,9 +207,9 @@ rustup target add armv7-linux-androideabi aarch64-linux-android i686-linux-andro
   8. To build from the command line, run:
   ```bash
   ./gradlew assemble
-  
+
   // or to install in MavenLocal
-  
+
   ./gradlew publishToMavenLocal
   ```
 
