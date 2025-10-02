@@ -1,0 +1,93 @@
+import java.util.Base64
+
+val publicationVariant = "release"
+val isSnapshot = project.property("IS_SNAPSHOT").toString().toBoolean()
+val myVersion = project.property("LIBRARY_VERSION").toString()
+
+val myGroup = "io.github.piratenetwork"
+project.group = myGroup
+
+pluginManager.withPlugin("com.android.library") {
+    project.the<com.android.build.gradle.LibraryExtension>().apply {
+        publishing {
+            singleVariant(publicationVariant) {
+                withSourcesJar()
+                withJavadocJar()
+            }
+        }
+    }
+}
+
+plugins.withId("org.gradle.maven-publish") {
+    val publishingExtension = extensions.getByType<PublishingExtension>().apply {
+        publications {
+            register<MavenPublication>("release") {
+                groupId = myGroup
+                version = if (isSnapshot) {
+                    "$myVersion-SNAPSHOT"
+                } else {
+                    myVersion
+                }
+
+                afterEvaluate {
+                    from(components[publicationVariant])
+                }
+
+                pom {
+                    name.set("Pirate Android Wallet SDK")
+                    description.set(
+                        "This lightweight SDK connects Android to the Pirate Network, allowing third-party " +
+                            "Android apps to send and receive shielded transactions easily, securely and privately."
+                    )
+                    url.set("https://github.com/piratenetwork/pirate-android-wallet-sdk/")
+                    inceptionYear.set("2018")
+                    scm {
+                        url.set("https://github.com/piratenetwork/pirate-android-wallet-sdk/")
+                        connection.set("scm:git:git://github.com/piratenetwork/pirate-android-wallet-sdk.git")
+                        developerConnection.set("scm:git:ssh://git@github.com/piratenetwork/pirate-android-wallet-sdk.git")
+                    }
+                    developers {
+                        developer {
+                            id.set("cryptoforge")
+                            name.set("Forge")
+                            url.set("https://github.com/cryptoforge/")
+                        }
+                    }
+                    licenses {
+                        license {
+                            name.set("The MIT License")
+                            url.set("http://opensource.org/licenses/MIT")
+                            distribution.set("repo")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Apply the nmcp plugin for Maven Central Portal publishing
+    project.pluginManager.apply("com.gradleup.nmcp")
+
+    plugins.withId("org.gradle.signing") {
+        project.the<SigningExtension>().apply {
+            // Maven Central requires signing for non-snapshots
+            isRequired = !isSnapshot
+
+            val signingKey = run {
+                val base64EncodedKey = project.property("ZCASH_ASCII_GPG_KEY").toString()
+                if (base64EncodedKey.isNotEmpty()) {
+                    val keyBytes = Base64.getDecoder().decode(base64EncodedKey)
+                    String(keyBytes)
+                } else {
+                    ""
+                }
+            }
+
+            if (signingKey.isNotEmpty()) {
+                useInMemoryPgpKeys(signingKey, "")
+            }
+
+            sign(publishingExtension.publications)
+        }
+    }
+}

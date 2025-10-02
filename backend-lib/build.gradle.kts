@@ -80,6 +80,19 @@ cargo {
 
     profile = "release"
     prebuiltToolchains = true
+    // To force the compiler to use the given page size
+    // See the new Android 16 KB page size requirement for more details:
+    // https://developer.android.com/about/versions/15/behavior-changes-all#16-kb
+    exec = { spec, _ ->
+        // Set RUSTFLAGS for each target to include the linker argument
+        val existingRustFlags = spec.environment["RUSTFLAGS"] as? String
+        val newRustFlags = if (existingRustFlags.isNullOrEmpty()) {
+            "-C link-arg=-Wl,-z,max-page-size=16384"
+        } else {
+            "$existingRustFlags -C link-arg=-Wl,-z,max-page-size=16384"
+        }
+        spec.environment["RUSTFLAGS"] = newRustFlags
+    }
 
     // As a workaround to the Gradle (starting from v7.4.1) and Rust Android Gradle plugin (starting from v0.9.3)
     // incompatibility issue we need to add rust jni directory manually. See
