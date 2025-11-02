@@ -42,17 +42,17 @@ class BlockHeightTest {
         val one = BlockHeight.new(PirateNetwork.Mainnet, PirateNetwork.Mainnet.saplingActivationHeight.value)
         val two = BlockHeight.new(PirateNetwork.Mainnet, PirateNetwork.Mainnet.saplingActivationHeight.value + 123)
 
-        assertEquals(838523L, (one + two).value)
+        assertEquals(305833L, (one + two).value)
     }
 
     @Test
     fun addition_of_int_succeeds() {
-        assertEquals(419323L, (PirateNetwork.Mainnet.saplingActivationHeight + 123).value)
+        assertEquals(152978L, (PirateNetwork.Mainnet.saplingActivationHeight + 123).value)
     }
 
     @Test
     fun addition_of_long_succeeds() {
-        assertEquals(419323L, (PirateNetwork.Mainnet.saplingActivationHeight + 123L).value)
+        assertEquals(152978L, (PirateNetwork.Mainnet.saplingActivationHeight + 123L).value)
     }
 
     @Test

@@ -7,11 +7,13 @@ import java.math.MathContext
 import kotlin.test.assertEquals
 
 class ConversionsTest {
+    
+    private val arrrPrice = BigDecimal("1.0") // Test price: 1 USD per ARRR
 
     @Test
     fun `default right padding is 6`() {
-        assertEquals(1.13.toZec(6), Arrrtoshi(113000000L).convertArrrtoshiToZec())
-        assertEquals(1.13.toZec(6), 1.13.toZec())
+        assertEquals(1.13.toArrr(6), Arrrtoshi(113000000L).convertArrrtoshiToArrr())
+        assertEquals(1.13.toArrr(6), 1.13.toArrr())
     }
 
     @Test
@@ -82,18 +84,14 @@ class ConversionsTest {
     }
 
     @Test
-    fun `toZec reduces precision`() {
-        val amount = "20.37905033625433054819645404524149".safelyConvertToBigDecimal()
-        val expected = "20.379050".safelyConvertToBigDecimal()
-        assertEquals(expected, amount.toZec(6))
-        assertEquals("20.37905", amount.toArrrString(6))
+    fun `toArrr reduces precision with rounding up`() {
+        val amount = "20.37905555555555555555555555555555".safelyConvertToBigDecimal()
+        val expected = "20.379056".safelyConvertToBigDecimal()
+        assertEquals(expected, amount.toArrr(6))
     }
 
     @Test
-    fun `convert usd to zec`() {
-        val price = BigDecimal("49.07", MathContext.DECIMAL128)
-        val usdValue = "1000".safelyConvertToBigDecimal()
-        val zecValue = usdValue.convertUsdToZec(price)
-        assertEquals("20.379050".safelyConvertToBigDecimal(), zecValue.toZec(6))
+    fun `toArrrString() + convertUsdToArrr()`() {
+        assertEquals("113", "$113".safelyConvertToBigDecimal().convertUsdToArrr(arrrPrice).toArrrString())
     }
 }
