@@ -664,10 +664,12 @@ class CompactBlockProcessor internal constructor(
         internal const val MAX_REORG_SIZE = 100
 
         /**
-         * Default size of batches of blocks to request from the compact block service. Then it's also used as a default
-         * size of batches of blocks to validate and scan via librustzcash. For scanning action applies this - the
-         * smaller this number the more granular information can be provided about scan state. Unfortunately, it may
-         * also lead to a lot of overhead during scanning.
+         * Default/fallback size of batches of blocks to request from the compact block service. 
+         * This is used when the server doesn't support GetLiteWalletBlockGroup or when the query fails.
+         * The actual batch size is now dynamically determined by calling GetLiteWalletBlockGroup before each batch
+         * download, as optimal size varies based on blockchain usage patterns and block density in different sections.
+         * For scanning action applies this - the smaller this number the more granular information 
+         * can be provided about scan state. Unfortunately, it may also lead to a lot of overhead during scanning.
          */
         internal const val SYNC_BATCH_SIZE = 10
 
@@ -720,7 +722,7 @@ class CompactBlockProcessor internal constructor(
             } else {
                 Twig.debug { "Syncing blocks in range $syncRange" }
 
-                val batches = getBatchedBlockList(syncRange, network)
+                val batches = getBatchedBlockList(syncRange, network, downloader)
 
                 // Check for the last enhanced height and eventually set is as the beginning of the next enhancing range
                 var enhancingRange = if (enhanceStartHeight != null) {
@@ -854,37 +856,73 @@ class CompactBlockProcessor internal constructor(
             }
         }
 
-        private fun getBatchedBlockList(
+        private suspend fun getBatchedBlockList(
             syncRange: ClosedRange<BlockHeight>,
-            network: PirateNetwork
+            network: PirateNetwork,
+            downloader: CompactBlockDownloader
         ): List<BlockBatch> {
             val missingBlockCount = syncRange.endInclusive.value - syncRange.start.value + 1
-            val batchCount = (
-                missingBlockCount / SYNC_BATCH_SIZE +
-                    (if (missingBlockCount.rem(SYNC_BATCH_SIZE) == 0L) 0 else 1)
-                )
-
-            Twig.debug {
-                "Found $missingBlockCount missing blocks, syncing in $batchCount batches of $SYNC_BATCH_SIZE..."
-            }
-
-            var start = syncRange.start
-            return buildList {
-                for (index in 1..batchCount) {
-                    val end = BlockHeight.new(
+            
+            val batches = mutableListOf<BlockBatch>()
+            var currentStart = syncRange.start
+            var batchIndex = 1L
+            
+            while (currentStart <= syncRange.endInclusive) {
+                val remainingBlocks = syncRange.endInclusive.value - currentStart.value + 1
+                
+                // Try to get optimized batch size from server
+                val optimizedEndHeight = try {
+                    downloader.getLiteWalletBlockGroup(currentStart, network)
+                } catch (e: Exception) {
+                    Twig.warn { "Failed to get optimized block group for height $currentStart: ${e.message}" }
+                    null
+                }
+                
+                val actualBatchEnd = if (optimizedEndHeight != null && optimizedEndHeight.value <= syncRange.endInclusive.value) {
+                    // Use server-optimized batch size
+                    val optimizedBatchSize = optimizedEndHeight.value - currentStart.value + 1
+                    Twig.debug { "Using optimized batch size: $optimizedBatchSize for height $currentStart" }
+                    optimizedEndHeight
+                } else {
+                    // Fall back to fixed batch size
+                    val fallbackBatchSize = min(SYNC_BATCH_SIZE.toLong(), remainingBlocks)
+                    val fallbackEndHeight = BlockHeight.new(
                         network,
                         min(
-                            (syncRange.start.value + (index * SYNC_BATCH_SIZE)) - 1,
+                            currentStart.value + fallbackBatchSize - 1,
                             syncRange.endInclusive.value
                         )
-                    ) // subtract 1 on the first value because the range is inclusive
-
-                    add(BlockBatch(index, start..end))
-                    start = end + 1
+                    )
+                    
+                    if (optimizedEndHeight != null) {
+                        Twig.debug { 
+                            "Server returned invalid block group, using fallback: $SYNC_BATCH_SIZE " +
+                            "(optimized end: ${optimizedEndHeight.value}, sync end: ${syncRange.endInclusive.value})"
+                        }
+                    } else {
+                        Twig.debug { "Using fallback batch size: $fallbackBatchSize for height $currentStart" }
+                    }
+                    
+                    fallbackEndHeight
                 }
+                
+                batches.add(BlockBatch(batchIndex, currentStart..actualBatchEnd))
+                
+                val actualBatchSize = actualBatchEnd.value - currentStart.value + 1
+                Twig.debug {
+                    "Created batch $batchIndex: $currentStart..$actualBatchEnd (size: $actualBatchSize)"
+                }
+                
+                currentStart = BlockHeight.new(network, actualBatchEnd.value + 1)
+                batchIndex++
             }
-        }
 
+            Twig.debug {
+                "Found $missingBlockCount missing blocks, syncing in ${batches.size} batches..."
+            }
+            
+            return batches
+        }
         /**
          * Request and download all blocks in the given range and persist them locally for processing, later.
          *

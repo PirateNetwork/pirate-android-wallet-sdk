@@ -99,6 +99,21 @@ internal class LightWalletClientImpl private constructor(
         }
     }
 
+    @Suppress("SwallowedException")
+    override suspend fun getLiteWalletBlockGroup(blockHeight: BlockHeightUnsafe): Response<BlockHeightUnsafe> {
+        return try {
+            val blockId = blockHeight.toBlockHeight()
+            val resultBlockId = requireChannel().createStub(singleRequestTimeout)
+                .getLiteWalletBlockGroup(blockId)
+
+            val resultBlockHeight = BlockHeightUnsafe(resultBlockId.height)
+
+            Response.Success(resultBlockHeight)
+        } catch (e: StatusException) {
+            GrpcStatusResolver.resolveFailureFromStatus(e)
+        }
+    }
+
     override suspend fun submitTransaction(spendTransaction: ByteArray): Response<SendResponseUnsafe> {
         require(spendTransaction.isNotEmpty()) {
             "${Constants.ILLEGAL_ARGUMENT_EXCEPTION_MESSAGE} Failed to submit transaction because it was empty, so " +

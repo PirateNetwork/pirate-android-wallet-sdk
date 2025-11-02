@@ -7,6 +7,7 @@ import pirate.android.sdk.internal.model.JniBlockMeta
 import pirate.android.sdk.internal.model.ext.from
 import pirate.android.sdk.internal.repository.CompactBlockRepository
 import pirate.android.sdk.model.BlockHeight
+import pirate.android.sdk.model.PirateNetwork
 import pirate.lightwallet.client.LightWalletClient
 import pirate.lightwallet.client.model.BlockHeightUnsafe
 import pirate.lightwallet.client.model.CompactBlockUnsafe
@@ -102,6 +103,26 @@ open class CompactBlockDownloader private constructor(val compactBlockRepository
      * @return the latest block height.
      */
     suspend fun getLatestBlockHeight() = lightWalletClient.getLatestBlockHeight()
+
+    /**
+     * Get the optimized block group size by querying the server for the last block height in the
+     * group starting from the given block height.
+     *
+     * @param blockHeight the starting block height
+     * @return the last block height in the optimized group, or null if an error occurs
+     */
+    suspend fun getLiteWalletBlockGroup(blockHeight: BlockHeight, network: PirateNetwork): BlockHeight? {
+        return when (val response = lightWalletClient.getLiteWalletBlockGroup(BlockHeightUnsafe.from(blockHeight))) {
+            is Response.Success -> {
+                Twig.verbose { "Got optimized block group end height: ${response.result.value}" }
+                BlockHeight.new(network, response.result.value)
+            }
+            is Response.Failure -> {
+                Twig.warn { "Failed to get optimized block group for height $blockHeight: ${response.description}" }
+                null
+            }
+        }
+    }
 
     /**
      * Return the latest block height that has been persisted into the [CompactBlockRepository].

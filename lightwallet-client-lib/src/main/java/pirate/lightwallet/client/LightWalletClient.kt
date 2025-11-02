@@ -57,6 +57,12 @@ interface LightWalletClient {
     suspend fun getServerInfo(): Response<LightWalletEndpointInfoUnsafe>
 
     /**
+     * @param blockHeight the block height to query for group end height
+     * @return the last block height of the optimized group for efficient downloading
+     */
+    suspend fun getLiteWalletBlockGroup(blockHeight: BlockHeightUnsafe): Response<BlockHeightUnsafe>
+
+    /**
      * Gets all the transactions for a given t-address over the given range.  In practice, this is
      * effectively the same as an RPC call to a node that's running an insight server. The data is
      * indexed and responses are fairly quick.
