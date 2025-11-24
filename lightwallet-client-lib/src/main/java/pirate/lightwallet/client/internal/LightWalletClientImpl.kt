@@ -35,13 +35,16 @@ import kotlin.time.Duration.Companion.seconds
  * @property streamingRequestTimeout the timeout to use for streaming requests. When a new stub
  * is created for streaming requests, it will use a deadline that is after the given duration from
  * now.
+ * @property blockRangeTimeout the timeout to use specifically for getBlockRange requests. This is
+ * separate from streamingRequestTimeout to allow longer downloads of large block batches.
  */
 @Suppress("TooManyFunctions")
 internal class LightWalletClientImpl private constructor(
     private val channelFactory: ChannelFactory,
     private val lightWalletEndpoint: LightWalletEndpoint,
     private val singleRequestTimeout: Duration = 10.seconds,
-    private val streamingRequestTimeout: Duration = 90.seconds
+    private val streamingRequestTimeout: Duration = 90.seconds,
+    private val blockRangeTimeout: Duration = 600.seconds
 ) : LightWalletClient {
 
     private var channel = channelFactory.newChannel(lightWalletEndpoint)
@@ -52,7 +55,7 @@ internal class LightWalletClientImpl private constructor(
         }
 
         return try {
-            requireChannel().createStub(streamingRequestTimeout)
+            requireChannel().createStub(blockRangeTimeout)
                 .getBlockRange(heightRange.toBlockRange())
                 .map {
                     val response: Response<CompactBlockUnsafe> = Response.Success(CompactBlockUnsafe.new(it))
